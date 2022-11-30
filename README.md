@@ -1,9 +1,7 @@
-This application is used for demo a simple usecase using CRC using microshift preset.
+This application is used for demo a simple usecase using CRC with microshift preset.
 
-Build and Run CRC
+Run CRC with microshift preset
 -----------------
-
-- Use https://github.com/crc-org/crc/pull/3421 and build the CRC
 
 
 ```
@@ -26,7 +24,7 @@ for this application and we can directly use podman socket which is exposed by C
 ```
 $ eval $(crc podman-env --root)
 $ podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
-$ podman run -d -p 8080:8080 quay.io/praveenkumar/myserver:latest
+$ podman run -d -p 8080:8080 quay.io/praveenkumar/myserver:v1
 $ curl localhost:8080
 hello
 ```
