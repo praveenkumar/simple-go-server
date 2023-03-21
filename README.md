@@ -44,10 +44,10 @@ $ oc get ep
 NAME         ENDPOINTS            AGE
 kubernetes   192.168.127.2:6443   3h1m
 myserver     10.42.0.11:8080      3s
-$ oc expose service myserver --hostname=myserver-default.apps-crc.testing --dry-run=client -ojson | jq '.spec.to.kind="Service"' | oc create -f -
+$ oc expose service myserver
 $ oc get routes
 NAME       HOST                                ADMITTED   SERVICE    TLS
-myserver   myserver-default.apps-crc.testing   True       myserver   
-$ curl myserver-default.apps-crc.testing 
+myserver   myserver-default.apps.crc.testing   True       myserver   
+$ curl myserver-default.apps.crc.testing
 hello
 ```
