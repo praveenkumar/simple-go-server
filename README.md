@@ -51,3 +51,5 @@ myserver   myserver-default.apps.crc.testing   True       myserver
 $ curl myserver-default.apps.crc.testing
 hello
 ```
+
+Added the workflow to test the app
