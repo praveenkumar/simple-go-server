@@ -8,6 +8,12 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
+        required: false
+        default: false
 env:
   ON_DEMAND_DEBUG_PODS: false
   TERM: xterm-color
@@ -55,12 +61,33 @@ jobs:
       - name: Set Preset
         run: |
           crc config set preset microshift; sleep 60
-      - name: Set Memory
-        run: |
-          crc config set memory 6124; sleep 60
       - name: Run CRC Setup
         run: |
           crc setup; sleep 60
       - name: Run CRC Start
         run: |          
           crc start --pull-secret-file temp-ps.json --log-level debug
+      - uses: actions/checkout@v3
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+        with:
+          limit-access-to-actor: true
+      - name: use the podman env from microshift preset
+        run: |
+          eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+      - name: Create resource (namespace/pod/service)
+        run: |
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig apply -f openshift/deploy.yaml
+      - name: Create the route
+        run: |
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig expose service myserver -n demo
+      - name: Get all the pods
+        run: |          
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig get pods -A
+      - name: get the routes
+        run: |
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig get routes -n demo
+      - name: access route using curl
+        run: |
+          curl -Ik myserver-demo.apps.crc.testing
