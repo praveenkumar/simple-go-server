@@ -6,6 +6,7 @@ Run CRC with microshift preset
 
 ```
 $ crc config set preset microshift
+$ crc setup
 $ crc start
 $ crc status
 CRC VM:          Running
@@ -30,26 +31,23 @@ hello
 ```
 
 Now everything works locally and we also created the image, next step would be try
-to deploy it on openshift cluster and see if our app still work.
+to deploy it on the cluster and see if our app still work.
 
 ```
 $ eval $(crc oc-env)
 $ export KUBECONFIG=${HOME}/.crc/machines/crc/kubeconfig
-$ oc run myserver --image=quay.io/praveenkumar/myserver:v1 --port=8080 -l app=myserver
-$ oc get pods
+$ oc apply -f openshift/deploy.yaml
+$ oc get pods -n demo
 NAME       READY   STATUS    RESTARTS   AGE
 myserver   1/1     Running   0          2s
-$ oc create svc clusterip myserver --tcp=8080
-$ oc get ep
+$ oc get ep -n demo
 NAME         ENDPOINTS            AGE
 kubernetes   192.168.127.2:6443   3h1m
 myserver     10.42.0.11:8080      3s
-$ oc expose service myserver
+$ oc expose service myserver -n demo
 $ oc get routes
 NAME       HOST                                ADMITTED   SERVICE    TLS
-myserver   myserver-default.apps.crc.testing   True       myserver   
-$ curl myserver-default.apps.crc.testing
+myserver   myserver-demo.apps.crc.testing   True       myserver   
+$ curl myserver-demo.apps.crc.testing
 hello
 ```
-
-Added the workflow to test the app
