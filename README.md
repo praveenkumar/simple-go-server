@@ -45,7 +45,7 @@ NAME         ENDPOINTS            AGE
 kubernetes   192.168.127.2:6443   3h1m
 myserver     10.42.0.11:8080      3s
 $ oc expose service myserver -n demo
-$ oc get routes
+$ oc get routes -n demo
 NAME       HOST                                ADMITTED   SERVICE    TLS
 myserver   myserver-demo.apps.crc.testing   True       myserver   
 $ curl myserver-demo.apps.crc.testing
