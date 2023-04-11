@@ -78,7 +78,7 @@ jobs:
           eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
       - name: Create resource (namespace/pod/service)
         run: |
-          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig apply -f openshift/deploy.yaml
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig apply -f kubernetes/deploy.yaml
       - name: Create the route
         run: |
           oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig expose service myserver -n demo
