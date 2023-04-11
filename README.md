@@ -36,7 +36,7 @@ to deploy it on the cluster and see if our app still work.
 ```
 $ eval $(crc oc-env)
 $ export KUBECONFIG=${HOME}/.crc/machines/crc/kubeconfig
-$ oc apply -f openshift/deploy.yaml
+$ oc apply -f kubernetes/deploy.yaml
 $ oc get pods -n demo
 NAME       READY   STATUS    RESTARTS   AGE
 myserver   1/1     Running   0          2s
