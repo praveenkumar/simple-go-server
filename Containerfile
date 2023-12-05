@@ -13,4 +13,6 @@ COPY --from=builder /workspace/myserver /usr/bin/myserver
 
 EXPOSE 8080/tcp
 
+USER 1000
+
 ENTRYPOINT ["myserver"]
