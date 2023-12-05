@@ -1,11 +1,11 @@
-FROM registry.access.redhat.com/ubi8/go-toolset:1.17.7 as builder
+FROM registry.access.redhat.com/ubi9/go-toolset:latest as builder
 
 USER root
 WORKDIR /workspace
 COPY . .
 RUN go build -o myserver server.go
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 LABEL MAINTAINER "Praveen Kumar <prkumar@redhat.com>"
 
