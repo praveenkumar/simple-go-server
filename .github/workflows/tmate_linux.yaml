@@ -1,0 +1,39 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run a multi-line script
+      run: |
+        sudo apt-get update
+        sudo apt install qemu-kvm libvirt-daemon libvirt-daemon-system
+        sudo usermod -a -G kvm,libvirt $USER
+    - name: Remove unwanted stuff to free up disk image
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+        sudo docker image prune --all --force
+
+        sudo swapoff -a
+        sudo rm -f /mnt/swapfile
+    - name: Download crc and install
+      run: curl --retry 5 --retry-connrefused -L https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/2.31.0/crc-linux-amd64.tar.xz | tar -C /usr/local/bin --strip-components=1 -xJvf -
+    - name: Set the crc config
+      run: |
+        crc config set preset okd
+        crc config set network-mode user
+    - name: Setup the crc
+      run: sudo -su $USER crc setup
+    - name: Start the crc
+      run: sudo -su $USER crc start
