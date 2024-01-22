@@ -1,0 +1,85 @@
+# https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/crc-linux-amd64.tar.xz
+
+name: CRC Tests on linux
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  smoke-tests:
+    name: Run Smoke Tests Against OpenShift Local
+    runs-on: ubuntu-latest
+    env:
+      SHELL: /bin/bash
+      KUBECONFIG: '/Users/runner/.kube/config'
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+
+      - name: check if CRC_PULL_SECRET exists
+        env: 
+          super_secret: ${{ secrets.CRC_PULL_SECRET }}
+        if: ${{ env.super_secret == '' }}
+        run: 'echo the secret \"CRC_PULL_SECRET\" has not been made; echo please go to \"settings \> secrets \> actions\" to create it'
+
+      - name: Write the pull secret to json file
+        run: |
+          echo $CRC_PULL_SECRET > temp-ps.json
+        env:
+          CRC_PULL_SECRET: ${{ secrets.CRC_PULL_SECRET }}
+
+      - name: Install required virtualization software
+        run: |
+          sudo apt-get update
+          sudo apt install qemu-kvm libvirt-daemon libvirt-daemon-system
+          sudo usermod -a -G kvm,libvirt $USER
+      - name: Remove unwanted stuff to free up disk image
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+          sudo docker image prune --all --force
+
+          sudo swapoff -a
+          sudo rm -f /mnt/swapfile
+
+
+      - name: Download crc and install
+        run: curl --retry 5 --retry-connrefused -L https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/2.31.0/crc-linux-amd64.tar.xz | tar -C /usr/local/bin --strip-components=1 -xJvf -
+      - name: Set the crc config
+        run: |
+          crc config set preset microshift
+          crc config set network-mode user
+      - name: Setup the crc
+        run: sudo -su $USER crc setup
+      - name: Start the crc
+        run: sudo -su $USER crc start --pull-secret-file temp-ps.json
+      - name: use the podman env from crc preset
+        run: |
+          eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+      - name: Create resource (namespace/pod/service)
+        run: |
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig apply -f kubernetes/deploy.yaml
+      - name: Create the route
+        run: |
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig expose service myserver -n demo
+      - name: Get all the pods
+        run: |          
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig get pods -A
+      - name: get the routes
+        run: |
+          oc --kubeconfig ${HOME}/.crc/machines/crc/kubeconfig get routes -n demo
+      - name: access route using curl
+        run: |
+          curl -Ik myserver-demo.apps.crc.testing
