@@ -1,6 +1,6 @@
 # https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/crc-linux-amd64.tar.xz
 
-name: CRC Tests
+name: CRC Tests on mac
 
 on:
   push:
