@@ -54,13 +54,13 @@ jobs:
       # Create a OpenShift Local Cluster for testing
       - name: Curl the CRC binary
         run: |
-          wget -O crc-macos-installer.pkg https://storage.googleapis.com/crc-bundle-github-ci/crc-microshift/crc-macos-installer.pkg
+          wget -O crc-macos-installer.pkg https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/2.31.0/crc-macos-installer.pkg
       - name: Install CRC
         run: |
           sudo installer -pkg crc-macos-installer.pkg -target /
       - name: Set Preset
         run: |
-          crc config set preset microshift; sleep 60
+          crc config set preset microshift; sleep 6
       - name: Run CRC Setup
         run: |
           crc setup; sleep 60
