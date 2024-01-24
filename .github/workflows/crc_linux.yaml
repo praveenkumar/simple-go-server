@@ -1,42 +1,28 @@
 # https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/crc-linux-amd64.tar.xz
 
-name: CRC Tests
+name: CRC Tests on linux
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
-    inputs:
-      debug_enabled:
-        type: boolean
-        description: 'Run the build with tmate debugging enabled (https://github.com/marketplace/actions/debugging-with-tmate)'
-        required: false
-        default: false
-env:
-  ON_DEMAND_DEBUG_PODS: false
-  TERM: xterm-color
-
 jobs:
   smoke-tests:
     name: Run Smoke Tests Against OpenShift Local
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     env:
       SHELL: /bin/bash
       KUBECONFIG: '/Users/runner/.kube/config'
-
     steps:
-      - name: Download brew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-      - name: Install the oc binaries
-        run: |
-          brew install openshift-cli
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
         with:
           ref: ${{ github.sha }}
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
       - name: check if CRC_PULL_SECRET exists
         env: 
@@ -49,31 +35,37 @@ jobs:
           echo $CRC_PULL_SECRET > temp-ps.json
         env:
           CRC_PULL_SECRET: ${{ secrets.CRC_PULL_SECRET }}
-        shell: bash
 
-      # Create a OpenShift Local Cluster for testing
-      - name: Curl the CRC binary
+      - name: Install required virtualization software
         run: |
-          wget -O crc-macos-installer.pkg https://storage.googleapis.com/crc-bundle-github-ci/crc-microshift/crc-macos-installer.pkg
-      - name: Install CRC
+          sudo apt-get update
+          sudo apt install qemu-kvm libvirt-daemon libvirt-daemon-system
+          sudo usermod -a -G kvm,libvirt $USER
+      - name: Remove unwanted stuff to free up disk image
         run: |
-          sudo installer -pkg crc-macos-installer.pkg -target /
-      - name: Set Preset
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+          sudo docker image prune --all --force
+
+          sudo swapoff -a
+          sudo rm -f /mnt/swapfile
+
+
+      - name: Download crc and install
+        run: curl --retry 5 --retry-connrefused -L https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/2.31.0/crc-linux-amd64.tar.xz | tar -C /usr/local/bin --strip-components=1 -xJvf -
+      - name: Set the crc config
         run: |
-          crc config set preset microshift; sleep 60
-      - name: Run CRC Setup
-        run: |
-          crc setup; sleep 60
-      - name: Run CRC Start
-        run: |          
-          crc start --pull-secret-file temp-ps.json --log-level debug
-      - uses: actions/checkout@v3
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-        with:
-          limit-access-to-actor: true
-      - name: use the podman env from microshift preset
+          crc config set preset microshift
+          crc config set network-mode user
+      - name: Setup the crc
+        run: sudo -su $USER crc setup
+      - name: Start the crc
+        run: sudo -su $USER crc start --pull-secret-file temp-ps.json
+      - name: use the podman env from crc preset
         run: |
           eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
       - name: Create resource (namespace/pod/service)
