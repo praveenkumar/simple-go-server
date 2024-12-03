@@ -24,7 +24,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
 
       - name: CRC
-        uses: praveenkumar/crc-github-action@e07f58e138136dc2c64a5762fbdc58d43cd00751
+        uses: praveenkumar/crc-github-action@v1
         with:
           pull-secret: ${{ secrets.CRC_PULL_SECRET }}
 
@@ -41,9 +41,7 @@ jobs:
       - name: Get all the pods
         run: |          
           oc get pods -A
-      - name: get the routes
+      - name: get the routes and access it with curl
         run: |
-          oc get routes -n demo
-      - name: access route using curl
-        run: |
+          oc get routes -n demo 
           curl -Ik myserver-demo.apps.crc.testing
