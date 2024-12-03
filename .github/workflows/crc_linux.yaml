@@ -1,0 +1,49 @@
+# https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/crc-linux-amd64.tar.xz
+
+name: CRC Tests on linux
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  smoke-tests:
+    name: Run Smoke Tests Against OpenShift Local
+    runs-on: ubuntu-latest
+    env:
+      SHELL: /bin/bash
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+
+      - name: CRC
+        uses: praveenkumar/crc-github-action@e07f58e138136dc2c64a5762fbdc58d43cd00751
+        with:
+          pull-secret: ${{ secrets.CRC_PULL_SECRET }}
+
+      - name: use the podman env from crc preset
+        run: |
+          eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+      - name: Create resource (namespace/pod/service)
+        run: |
+          oc apply -f kubernetes/deploy.yaml
+          oc wait --for=jsonpath='{.status.phase}'=Running pod/myserver -n demo
+      - name: Create the route
+        run: |
+          oc expose service myserver -n demo
+      - name: Get all the pods
+        run: |          
+          oc get pods -A
+      - name: get the routes
+        run: |
+          oc get routes -n demo
+      - name: access route using curl
+        run: |
+          curl -Ik myserver-demo.apps.crc.testing
