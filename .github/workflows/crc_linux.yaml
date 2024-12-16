@@ -27,6 +27,7 @@ jobs:
         uses: praveenkumar/crc-github-action@v1
         with:
           pull-secret: ${{ secrets.CRC_PULL_SECRET }}
+          preset: openshift
 
       - name: use the podman env from crc preset
         run: |
