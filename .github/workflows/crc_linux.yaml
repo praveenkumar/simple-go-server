@@ -24,7 +24,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
 
       - name: CRC
-        uses: praveenkumar/crc-github-action@v1
+        uses: crc-org/crc-github-action@v1
         with:
           pull-secret: ${{ secrets.CRC_PULL_SECRET }}
 
