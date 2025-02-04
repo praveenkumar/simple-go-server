@@ -4,10 +4,30 @@ Run CRC with microshift preset
 -----------------
 
 
+Setting the CRC config
+
 ```
-$ crc config set preset microshift
-$ crc setup
-$ crc start
+crc config set preset microshift
+```
+
+
+Applying the CRC config
+
+```
+crc setup
+```
+
+
+Starting the CRC VM/Deployment
+
+```
+crc start
+```
+
+
+Checking CRC VM is up and running
+
+```
 $ crc status
 CRC VM:          Running
 RAM Usage:       1.182GB of 3.759GB
@@ -23,9 +43,18 @@ This repo have `Containerfile` which can be used to generate the container image
 for this application and we can directly use podman socket which is exposed by CRC
 
 ```
-$ eval $(crc podman-env --root)
-$ podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
-$ podman run -d -p 8080:8080 quay.io/praveenkumar/myserver:v1
+eval $(crc podman-env --root)
+```
+
+```
+podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+```
+
+```
+podman run -d -p 8080:8080 quay.io/praveenkumar/myserver:v1
+```
+
+```
 $ curl localhost:8080
 hello
 ```
