@@ -31,7 +31,7 @@ hello
 ```
 
 Now everything works locally and we also created the image, next step would be try
-to deploy it on the cluster and see if our app still work.
+to deploy it on the cluster and check if our app still work.
 
 ```
 $ eval $(crc oc-env)
