@@ -1,0 +1,21 @@
+name: Check nested virtualization support for arm
+
+on:
+  pull_request: {}
+
+jobs:
+  setup-tools:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Install required virtualization software
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt install qemu-kvm libvirt-daemon libvirt-daemon-system virtiofsd
+          sudo usermod -a -G libvirt $USER
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
+
