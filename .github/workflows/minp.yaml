@@ -1,0 +1,44 @@
+name: Test with microshift in container
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+
+jobs:
+  setup-tools:
+    runs-on: ubuntu-24.04
+    env:
+      SHELL: /bin/bash
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Build the simple container image
+        run: |
+          docker build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+      - name: Set up MicroShift
+        uses: praveenkumar/minp-github-action@main
+      - name: Create resource (namespace/pod/service)
+        run: |
+          oc apply -f kubernetes/deploy.yaml
+          oc wait --for=jsonpath='{.status.phase}'=Running pod/myserver -n demo
+      - name: Create the route
+        run: |
+          oc expose service myserver -n demo
+      - name: Get all the pods
+        run: |
+          oc get pods -A
+      - name: get the routes and access it with curl
+        run: |
+          oc get routes -n demo
+          curl -Ik $(oc get route -n demo -ojsonpath='{.items[].spec.host}')
+
+
+
+
+
+
