@@ -27,6 +27,7 @@ jobs:
         uses: crc-org/crc-github-action@v1
         with:
           pull-secret: ${{ secrets.CRC_PULL_SECRET }}
+          preset: microshift
 
       - name: use the podman env from crc preset
         run: |
