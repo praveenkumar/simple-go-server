@@ -26,9 +26,16 @@ func headers(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func healthz(w http.ResponseWriter, req *http.Request) {
+	fmt.Printf("got /healthz request\n")
+	fmt.Fprintf(w, "ok\n")
+}
+
+
 func main() {
 	http.HandleFunc("/", hello)
 	http.HandleFunc("/headers", headers)
+	http.HandleFunc("/healthz", healthz)
 	http.HandleFunc("/version", version)
 
 	fmt.Println("Starting the server...")
