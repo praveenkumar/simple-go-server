@@ -5,9 +5,10 @@ ARG TARGETARCH
 
 USER root
 WORKDIR /workspace
+COPY go.mod ./
 COPY server.go .
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
-    go build -trimpath -ldflags="-s -w" -o myserver server.go
+    go build -trimpath -ldflags="-s -w" -o myserver .
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8
 
