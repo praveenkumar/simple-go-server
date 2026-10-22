@@ -1,18 +1,24 @@
-FROM registry.access.redhat.com/ubi9/go-toolset:latest as builder
+FROM --platform=$BUILDPLATFORM registry.access.redhat.com/ubi9/go-toolset:1.26 AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
 
 USER root
 WORKDIR /workspace
-COPY . .
-RUN go build -o myserver server.go
+COPY server.go .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o myserver server.go
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.8
 
-LABEL MAINTAINER "Praveen Kumar <prkumar@redhat.com>"
+LABEL org.opencontainers.image.authors="Praveen Kumar <prkumar@redhat.com>" \
+      org.opencontainers.image.source="https://github.com/praveenkumar/simple-go-server" \
+      org.opencontainers.image.version="v1"
 
 COPY --from=builder /workspace/myserver /usr/bin/myserver
 
 EXPOSE 8080/tcp
 
-USER 1000
+USER 1000:1000
 
 ENTRYPOINT ["myserver"]
