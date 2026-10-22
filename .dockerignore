@@ -1,0 +1,9 @@
+# VCS metadata and CI configuration must not reach the builder
+.git
+.github
+
+# Files not needed to build the image
+.dockerignore
+Containerfile
+README.md
+kubernetes
