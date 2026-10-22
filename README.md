@@ -19,12 +19,12 @@ Cache Directory: /Users/prkumar/.crc/cache
 Try the application locally using podman
 ----------------------------------------
 
-This repo have `Containerfile` which can be used to generate the container image
+This repo have `Dockerfile` which can be used to generate the container image
 for this application and we can directly use podman socket which is exposed by CRC
 
 ```
 $ eval $(crc podman-env --root)
-$ podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+$ podman build -t quay.io/praveenkumar/myserver:v1 -f Dockerfile .
 $ podman run -d -p 8080:8080 quay.io/praveenkumar/myserver:v1
 $ curl localhost:8080
 hello

@@ -19,7 +19,7 @@ jobs:
 
       - name: Build the simple container image
         run: |
-          docker build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+          docker build -t quay.io/praveenkumar/myserver:v1 -f Dockerfile .
       - name: Set up MicroShift
         uses: praveenkumar/minp-github-action@main
       - name: Create resource (namespace/pod/service)

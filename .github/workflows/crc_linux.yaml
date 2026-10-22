@@ -31,7 +31,7 @@ jobs:
 
       - name: use the podman env from crc preset
         run: |
-          eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Containerfile .
+          eval $(crc podman-env --root) && podman build -t quay.io/praveenkumar/myserver:v1 -f Dockerfile .
       - name: Create resource (namespace/pod/service)
         run: |
           oc apply -f kubernetes/deploy.yaml
