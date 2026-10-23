@@ -1,0 +1,69 @@
+name: Deploy latest image to OpenShift Local
+
+on:
+  workflow_run:
+    workflows: [ "Build and Push Multi-arch Container Image" ]
+    types: [ completed ]
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-ocp
+  cancel-in-progress: false
+
+env:
+  IMAGE: quay.io/praveenkumar/myserver
+
+jobs:
+  deploy:
+    name: Update manifest and deploy to OpenShift
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      SHELL: /bin/bash
+      NEW_IMAGE: quay.io/praveenkumar/myserver:${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update kubernetes/deploy.yaml with the new image
+        run: |
+          sed -i -E "s|image: ${IMAGE}:.*|image: ${NEW_IMAGE}|" kubernetes/deploy.yaml
+          grep -n "image:" kubernetes/deploy.yaml
+          git diff kubernetes/deploy.yaml
+
+      - name: Free up disk space on the runner
+        uses: palmsoftware/quick-cleanup@v0
+        with:
+           cleanup-mode: aggressive
+
+      - name: Set up OpenShift Local (CRC)
+        uses: crc-org/crc-github-action@v1
+        with:
+          pull-secret: ${{ secrets.CRC_PULL_SECRET }}
+          preset: openshift
+          disk: 40
+
+      - name: Deploy the application
+        run: |
+          oc apply -f kubernetes/deploy.yaml
+          oc wait --for=jsonpath='{.status.phase}'=Running pod/myserver -n demo --timeout=300s
+          oc get pod myserver -n demo -o jsonpath='{.spec.containers[0].image}{"\n"}'
+
+      - name: Expose and verify the route
+        run: |
+          oc expose service myserver -n demo
+          oc get routes -n demo
+          curl -Ik --retry 5 --retry-all-errors --retry-delay 10 \
+            "http://$(oc get route myserver -n demo -o jsonpath='{.spec.host}')"
+
+      - name: Dump cluster state on failure
+        if: ${{ failure() }}
+        run: |
+          oc get pods -A || true
+          oc describe pod myserver -n demo || true
+          oc get events -n demo --sort-by=.lastTimestamp || true
